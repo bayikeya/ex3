@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>複数スポット画像表示</title>
+</head>
+<body>
+  <h1>周辺スポット画像ガイド</h1>
+
+  <!-- 画像エリア -->
+  <img id="spotImage" src="" alt="スポット画像" style="display: none; width: 300px;" />
+
+  <script>
+    // 複数のスポット（緯度・経度・画像URL）
+    const spots = [
+      {
+        name: "13号館前",
+        lat: 35.69304364103873,
+        lng: 140.0508453073827,
+        image: "huyuka1.jpg"
+      },
+      {
+        name: "14号館正面入り口",
+        lat: 35.69253471617953,
+        lng: 140.05090829936066,
+        image: "huyuka2.jpg"
+      },
+      {
+        name: "図書館前",
+        lat: 35.69199985853299,
+        lng: 140.05079113020798,
+        image: "huyuka3.jpg"
+      }
+    ];
+
+    function getDistanceFromLatLonInMeters(lat1, lon1, lat2, lon2) {
+      const R = 6371000;
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLon = (lon2 - lon1) * Math.PI / 180;
+      const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                Math.sin(dLon / 2) * Math.sin(dLon / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return R * c;
+    }
+
+    function successCallback(position) {
+      const { latitude, longitude } = position.coords;
+
+      let found = false;
+
+      for (let i = 0; i < spots.length; i++) {
+        const spot = spots[i];
+        const distance = getDistanceFromLatLonInMeters(latitude, longitude, spot.lat, spot.lng);
+
+        console.log(`${spot.name} との距離: ${distance.toFixed(2)}m`);
+
+        if (distance < 10) {
+          // 10m以内に入ったら画像表示
+          const img = document.getElementById("spotImage");
+          img.src = spot.image;
+          img.style.display = "block";
+          found = true;
+          break; // 最初に見つかったスポットだけ表示
+        }
+      }
+
+      // どのスポットにも近くなければ非表示
+      if (!found) {
+        document.getElementById("spotImage").style.display = "none";
+      }
+    }
+
+    function errorCallback(error) {
+      console.error("位置情報の取得に失敗:", error);
+    }
+
+    // 定期的に位置をチェック
+    navigator.geolocation.watchPosition(successCallback, errorCallback, {
+      enableHighAccuracy: true,
+      maximumAge: 0,
+      timeout: 5000
+    });
+  </script>
+</body>
+</html>
